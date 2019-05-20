@@ -41,16 +41,9 @@
 #include "sapi.h"
 #include "Task.h"
 #include "semphr.h"
+#include "sapi_uart.h"
 
-//void onRx( void *noUsado )
-//{
-//	UBaseType_t uxSavedInterruptStatus;
-//   char c = uartRxRead( UART_USB );
-//   printf( "Recibimos <<%c>> por UART\r\n", c );
-//   //xSemaphoreGiveFromISR( SemFSM, &xHigherPriorityTaskWoken );
-//
-//  // if(xHigherPriorityTaskWoken) portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-//}
+//#define SAPI_USE_INTERRUPTS
 
 
 DEBUG_PRINT_ENABLE;
@@ -66,11 +59,11 @@ int main(void)
 
 
 
-//	//  uartConfig(UART_USB, 115200);
+	uartConfig(UART_USB, 115200);
 //	// Seteo un callback al evento de recepcion y habilito su interrupcion
-//	uartCallbackSet(UART_USB, UART_RECEIVE, onRx, NULL);
+	uartCallbackSet(UART_USB, UART_RECEIVE, CallbackRx, NULL);
 //	// Habilito todas las interrupciones de UART_USB
-//	uartInterrupt(UART_USB, true);
+	uartInterrupt(UART_USB, true);
 
 	SemTxUart = xSemaphoreCreateBinary();
 	//xPointerQueue = xQueueCreate(1 , sizeof(char *));

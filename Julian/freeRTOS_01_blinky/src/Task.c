@@ -11,7 +11,8 @@
 #include "Task.h"
 
 
-xSemaphoreHandle SemTxUart;
+SemaphoreHandle_t SemTxUart;
+SemaphoreHandle_t SemRxUart;
 Module_Data_t ModuleData;
 
 /*=================================================================================*/
@@ -32,13 +33,17 @@ void myTask_1( void* taskParmPtr )
 	portTickType xLastWakeTime = xTaskGetTickCount();
 
 	while(TRUE) {
+		//if( pdTRUE == xSemaphoreTake(SemRxUart, portMAX_DELAY) )
+		{
 
-		ModuleDinamicMemory_send(&ModuleData, "lala %d\r\n",xStringNumber,portMAX_DELAY);
-		gpioToggle( LEDB );
-		xStringNumber++;
-		xSemaphoreGive(SemTxUart);
-		// Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
-		vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+
+			ModuleDinamicMemory_send(&ModuleData, "lala %d\r\n",xStringNumber,portMAX_DELAY);
+			gpioToggle( LEDB );
+			xStringNumber++;
+			xSemaphoreGive(SemTxUart);
+			// Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
+			vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+		}
 	}
 }
 
@@ -56,3 +61,31 @@ void TaskTxUart( void* taskParmPtr ){
 		}
 	}
 }
+
+void CallbackRx( void *noUsado )
+{	volatile char buffer[50];
+	static volatile uint8_t index = 0,ready = 0,startFrame = 0;
+	UBaseType_t uxSavedInterruptStatus;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	char c = uartRxRead( UART_USB );
+
+	if(c == '{') startFrame = 1;
+	if(startFrame)	buffer[index++]= c;
+	else return;
+
+	if(index > sizeof(buffer)-1) index =0;
+	buffer[index] = 0;
+	if(c == '}'){
+		startFrame = 0;
+		ready = 1;
+		index =0;
+		printf( "Recibimos <<%s>> por UART\r\n", buffer );
+	}
+	//printf( "Recibimos <<%c>> por UART\r\n", c );
+	//if(ready == 1) xSemaphoreGiveFromISR( SemRxUart, &xHigherPriorityTaskWoken );
+
+	if(xHigherPriorityTaskWoken) portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+
+

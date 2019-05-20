@@ -16,8 +16,13 @@
 #include "DriverDinamicMemoryRTOS.h"
 
 extern SemaphoreHandle_t SemTxUart;
+extern SemaphoreHandle_t SemRxUart;
 extern Module_Data_t ModuleData;
 
 void myTask_1( void* taskParmPtr );
 void TaskTxUart( void* taskParmPtr );
+void CallbackRx( void *noUsado );
+
+
+
 #endif /* EXAMPLES_C_SAPI_RTOS_FREERTOS_STATIC_MEM_FREERTOS_01_BLINKY_INC_TASK_H_ */
