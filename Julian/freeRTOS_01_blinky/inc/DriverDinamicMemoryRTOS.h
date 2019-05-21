@@ -5,7 +5,7 @@
 
 /**/
 //xQueueSend( xQueue, pvItemToQueue, xTicksToWait ) xQueueGenericSend( ( xQueue ), ( pvItemToQueue ), ( xTicksToWait ), queueSEND_TO_BACK )
-typedef long (*xQueueSendFCN)( void *, const void * const , uint32_t , const long xCopyPosition );
+typedef long (*xQueueSendFCN)( void *, const void * const , uint32_t , const long  );
 
 //BaseType_t xQueueReceive( QueueHandle_t xQueue, void * const pvBuffer, TickType_t xTicksToWait )
 typedef long (*xQueueReceiveFCN)( void *, void * const , uint32_t);
@@ -21,12 +21,14 @@ typedef void* (*pvPortMallocFCN)(uint64_t);
 
 typedef void* (*xQueueCreateFCN)(const unsigned long ,const unsigned long, const uint8_t );
 
-
+//BaseType_t xQueueGenericSendFromISR( QueueHandle_t xQueue, const void * const pvItemToQueue, BaseType_t * const pxHigherPriorityTaskWoken, const BaseType_t xCopyPosition )
+typedef long (*xQueueSendFromISRFCN)( void *, const void * const , long * const , const long );
 
 typedef struct {
     char *xPointerQueue;
     uint8_t xMaxStringLength;
     xQueueSendFCN xQueueSendFunction;
+    xQueueSendFromISRFCN xQueueSendFromISRFunction;
     xQueueReceiveFCN xQueueReceiveFunction;
     pvPortMallocFCN pvPortMallocFunction;
     vPortFreeFCN vPortFreeFunction;
@@ -35,9 +37,9 @@ typedef struct {
 
 
 /*Prototypes*/
-void ModuleDinamicMemory_initialize( Module_Data_t *obj , uint32_t MaxLength, xQueueSendFCN xQueueSendFCN,xQueueReceiveFCN xQueueReceiveFCN, xQueueCreateFCN xQueueCreateFCN, pvPortMallocFCN pvPortMallocFCN,vPortFreeFCN vPortFreeFCN);
+void ModuleDinamicMemory_initialize( Module_Data_t *obj , uint32_t MaxLength, xQueueSendFCN xQueueSendFCN,xQueueSendFromISRFCN xQueueSendFromISRFCN, xQueueReceiveFCN xQueueReceiveFCN, xQueueCreateFCN xQueueCreateFCN, pvPortMallocFCN pvPortMallocFCN,vPortFreeFCN vPortFreeFCN);
 
-void ModuleDinamicMemory_send( Module_Data_t *obj , char* pbuf , uint32_t var,uint32_t portMaxDelay);
+void ModuleDinamicMemory_send( Module_Data_t *obj ,uint8_t Isr, long * const xHigherPriorityTaskWoken, char* pbuf , uint32_t var,uint32_t portMaxDelay, uint8_t CopyVarAndpbuffToStr);
 
 char* ModuleDinamicMemory_receive(Module_Data_t *obj, uint32_t portMaxDelay);
 

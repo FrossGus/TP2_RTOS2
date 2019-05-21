@@ -68,9 +68,9 @@ int main(void)
 	SemTxUart = xSemaphoreCreateBinary();
 	//xPointerQueue = xQueueCreate(1 , sizeof(char *));
 	xTaskCreate(TaskTxUart, (const char *)"TaskTxUart",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
-	xTaskCreate(myTask_1, (const char *)"myTask_1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
+	xTaskCreate(myTask_1, (const char *)"myTask_1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, &xTaskHandle_DL_RxNotify);
 
-	ModuleDinamicMemory_initialize(&ModuleData,50,xQueueGenericSend,xQueueReceive,xQueueGenericCreate,pvPortMalloc, vPortFree);
+	ModuleDinamicMemory_initialize(&ModuleData,50,xQueueGenericSend,xQueueGenericSendFromISR, xQueueReceive,xQueueGenericCreate,pvPortMalloc, vPortFree);
 
 	// Iniciar scheduler
 	vTaskStartScheduler();

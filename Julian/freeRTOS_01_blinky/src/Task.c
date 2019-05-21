@@ -14,7 +14,7 @@
 SemaphoreHandle_t SemTxUart;
 SemaphoreHandle_t SemRxUart;
 Module_Data_t ModuleData;
-
+TaskHandle_t xTaskHandle_DL_RxNotify = NULL;
 /*=================================================================================*/
 
 void myTask_1( void* taskParmPtr )
@@ -36,8 +36,8 @@ void myTask_1( void* taskParmPtr )
 		//if( pdTRUE == xSemaphoreTake(SemRxUart, portMAX_DELAY) )
 		{
 
-
-			ModuleDinamicMemory_send(&ModuleData, "lala %d\r\n",xStringNumber,portMAX_DELAY);
+			xTaskNotifyWait(0,0,NULL,portMAX_DELAY);
+			ModuleDinamicMemory_send(&ModuleData,0,NULL,"lala %d\r\n",xStringNumber,portMAX_DELAY,0);
 			gpioToggle( LEDB );
 			xStringNumber++;
 			xSemaphoreGive(SemTxUart);
@@ -62,8 +62,8 @@ void TaskTxUart( void* taskParmPtr ){
 	}
 }
 
-void CallbackRx( void *noUsado )
-{	volatile char buffer[50];
+void CallbackRx( void *noUsado ){
+	volatile char buffer[30];
 	static volatile uint8_t index = 0,ready = 0,startFrame = 0;
 	UBaseType_t uxSavedInterruptStatus;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -78,6 +78,8 @@ void CallbackRx( void *noUsado )
 	if(c == '}'){
 		startFrame = 0;
 		ready = 1;
+		xTaskNotifyFromISR(xTaskHandle_DL_RxNotify,0,eNoAction,xHigherPriorityTaskWoken);
+		//ModuleDinamicMemory_send(&ModuleData,1,&xHigherPriorityTaskWoken, "lala %d\r\n",0,portMAX_DELAY,0);
 		index =0;
 		printf( "Recibimos <<%s>> por UART\r\n", buffer );
 	}

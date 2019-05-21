@@ -18,6 +18,7 @@
 extern SemaphoreHandle_t SemTxUart;
 extern SemaphoreHandle_t SemRxUart;
 extern Module_Data_t ModuleData;
+extern TaskHandle_t xTaskHandle_DL_RxNotify ;
 
 void myTask_1( void* taskParmPtr );
 void TaskTxUart( void* taskParmPtr );
