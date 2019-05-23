@@ -9,22 +9,29 @@
 
 
 #include "Task.h"
+#include <string.h>
+#include <stdlib.h>
+/*Datos de Trama Recibida*/
+volatile DataFrame_t Data;
 
+/*Datos de trama para decodificar */
+volatile Frame_parameters_t Frame_parameters = { '{',0 , {0,0}, NULL,NULL, '}' };
 
 SemaphoreHandle_t SemTxUart;
 SemaphoreHandle_t SemRxUart;
+SemaphoreHandle_t SemMutexUart;
 Module_Data_t ModuleData;
-TaskHandle_t xTaskHandle_DL_RxNotify = NULL;
+TaskHandle_t xTaskHandle_RxNotify = NULL;
+
+QueueHandle_t xPointerQueue;
 /*=================================================================================*/
 
 void myTask_1( void* taskParmPtr )
 {
-	BaseType_t xStringNumber=0;
-	BaseType_t xcopy;
-	printf( "myTask_1\r\n" );
+	char *PtrSOF = NULL;
+	char *PtrEOF = NULL;
 
 	gpioWrite( LED1, ON );
-	// Envia la tarea al estado bloqueado durante 1 s (delay)
 	vTaskDelay( 1000 / portTICK_RATE_MS );
 	gpioWrite( LED1, OFF );
 
@@ -33,59 +40,102 @@ void myTask_1( void* taskParmPtr )
 	portTickType xLastWakeTime = xTaskGetTickCount();
 
 	while(TRUE) {
-		//if( pdTRUE == xSemaphoreTake(SemRxUart, portMAX_DELAY) )
-		{
+		/*Notifica que llego trama lista*/
+		xTaskNotifyWait(0,0,NULL,portMAX_DELAY);
 
-			xTaskNotifyWait(0,0,NULL,portMAX_DELAY);
-			ModuleDinamicMemory_send(&ModuleData,0,NULL,"lala %d\r\n",xStringNumber,portMAX_DELAY,0);
-			gpioToggle( LEDB );
-			xStringNumber++;
-			xSemaphoreGive(SemTxUart);
-			// Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
-			vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
+		/*Proteger datos para hacer copia local*/
+		taskENTER_CRITICAL();
+		Frame_parameters.BufferAux = ModuleData.pvPortMallocFunction(sizeof(Data.Buffer));
+		strcpy((char*)Frame_parameters.BufferAux,(const char*)Data.Buffer);
+		taskEXIT_CRITICAL();
+
+		/*Busco posición del inicio de la trama*/
+		PtrSOF = strchr((const char*)Frame_parameters.BufferAux, Frame_parameters._SOF);
+
+		if( PtrSOF != NULL ){
+			Frame_parameters.T[0] =  ( *(PtrSOF +  OFFSET_TAMANO)-'0' )*10 + (*(PtrSOF +  OFFSET_TAMANO + 1)-'0' ) ; /*T[0] -'0' *10 + T[1] - '0'*/
+			Frame_parameters.Operation = *(PtrSOF +  OFFSET_OP)-'0';
+			ModuleData.xMaxStringLength = Frame_parameters.T[0] + NUM_ELEMENTOS_REST_FRAME; /* + los demas elementos del frame*/
+
+			printf( "T %d\r\n",Frame_parameters.T[0]); // QUITAR
 		}
+
+		/*Envía el puntero al buffer con la trama a la cola*/
+		ModuleDinamicMemory_send(&ModuleData,0,NULL,(char*)Frame_parameters.BufferAux, portMAX_DELAY);
+
+		/*Libero memoria del buffer aux*/
+		ModuleData.vPortFreeFunction(Frame_parameters.BufferAux );
+		gpioToggle( LEDB );
+
+		/*sincronizar-Permite transmitir por uart lo que se recibe por la cola*/
+		//xSemaphoreGive(SemTxUart);
+		vTaskDelayUntil( &xLastWakeTime, xPeriodicity );
 	}
 }
+void Task_ToMayusculas_OP0( void* taskParmPtr ){
 
+}
+
+void Task_ToMinusculas_OP1( void* taskParmPtr ){
+
+}
+void Task_ReportStack_OP2( void* taskParmPtr ){
+
+}
+
+void Task_ReportHeap_OP3( void* taskParmPtr ){
+
+}
 /*===========Task receive==================================================================================*/
 void TaskTxUart( void* taskParmPtr ){
 	char * rx;
-	printf( "TaskTxUart\r\n" );
 
 	while(true){
-		if( pdTRUE == xSemaphoreTake(SemTxUart,portMAX_DELAY) ){
-
+		/*sincronizar-Permite transmitir por uart lo que se recibe por la cola*/
+		//if( pdTRUE == xSemaphoreTake(SemTxUart,portMAX_DELAY) )
+		{
+			/*Recibe por la cola*/
 			rx = ModuleDinamicMemory_receive(&ModuleData, portMAX_DELAY);
+
+			xSemaphoreTake(SemMutexUart,portMAX_DELAY);
 			printf( "rx %s\r\n",rx );
+			xSemaphoreGive(SemMutexUart);
+
+			/*Libera memoria dinamica*/
 			ModuleDinamicMemory_Free(&ModuleData, rx);
 		}
 	}
 }
 
 void CallbackRx( void *noUsado ){
-	volatile char buffer[30];
-	static volatile uint8_t index = 0,ready = 0,startFrame = 0;
+
 	UBaseType_t uxSavedInterruptStatus;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
 	char c = uartRxRead( UART_USB );
 
-	if(c == '{') startFrame = 1;
-	if(startFrame)	buffer[index++]= c;
+	/*Verifica Inicio de trama*/
+	if( Frame_parameters._SOF == c) Data.StartFrame = 1;
+
+	if(Data.StartFrame){
+		/*Porteger acceso al buffer*/
+		taskENTER_CRITICAL_FROM_ISR();
+		Data.Buffer[Data.Index++]= c;
+		taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+	}
 	else return;
 
-	if(index > sizeof(buffer)-1) index =0;
-	buffer[index] = 0;
-	if(c == '}'){
-		startFrame = 0;
-		ready = 1;
-		xTaskNotifyFromISR(xTaskHandle_DL_RxNotify,0,eNoAction,xHigherPriorityTaskWoken);
-		//ModuleDinamicMemory_send(&ModuleData,1,&xHigherPriorityTaskWoken, "lala %d\r\n",0,portMAX_DELAY,0);
-		index =0;
-		printf( "Recibimos <<%s>> por UART\r\n", buffer );
+	if(Data.Index > sizeof(Data)-1) Data.Index =0;
+	Data.Buffer[Data.Index] = 0;  /*char NULL pos siguiente*/
+	if(Frame_parameters._EOF == c){
+		Data.StartFrame = 0;
+		Data.Ready = 1;
+		xTaskNotifyFromISR(xTaskHandle_RxNotify,0,eNoAction,&xHigherPriorityTaskWoken);
+		Data.Index =0;
+		//		xSemaphoreTakeFromISR(SemMutexUart,xHigherPriorityTaskWoken);
+		//		printf( "Recibimos <<%s>> por UART\r\n", Data.Buffer );
+		//		xSemaphoreGiveFromISR(SemMutexUart,xHigherPriorityTaskWoken);
 	}
-	//printf( "Recibimos <<%c>> por UART\r\n", c );
-	//if(ready == 1) xSemaphoreGiveFromISR( SemRxUart, &xHigherPriorityTaskWoken );
-
 	if(xHigherPriorityTaskWoken) portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 

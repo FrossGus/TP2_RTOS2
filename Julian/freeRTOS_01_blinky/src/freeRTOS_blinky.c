@@ -66,9 +66,14 @@ int main(void)
 	uartInterrupt(UART_USB, true);
 
 	SemTxUart = xSemaphoreCreateBinary();
-	//xPointerQueue = xQueueCreate(1 , sizeof(char *));
+	SemMutexUart =xSemaphoreCreateMutex() ;
+	xPointerQueue = xQueueCreate(1 , sizeof(char *));
 	xTaskCreate(TaskTxUart, (const char *)"TaskTxUart",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
-	xTaskCreate(myTask_1, (const char *)"myTask_1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, &xTaskHandle_DL_RxNotify);
+	xTaskCreate(myTask_1, (const char *)"myTask_1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, &xTaskHandle_RxNotify);
+//	xTaskCreate(Task_ToMayusculas_OP0, (const char *)"Task_ToMayusculas_OP0",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
+//	xTaskCreate(Task_ToMinusculas_OP1, (const char *)"Task_ToMinusculas_OP1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
+//	xTaskCreate(Task_ReportStack_OP2, (const char *)"Task_ToMayusculas_OP0",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
+//	xTaskCreate(Task_ReportHeap_OP3, (const char *)"Task_ToMinusculas_OP1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
 
 	ModuleDinamicMemory_initialize(&ModuleData,50,xQueueGenericSend,xQueueGenericSendFromISR, xQueueReceive,xQueueGenericCreate,pvPortMalloc, vPortFree);
 

@@ -14,16 +14,15 @@ void ModuleDinamicMemory_initialize( Module_Data_t *obj , uint32_t MaxLength, xQ
 	obj->vPortFreeFunction = vPortFreeFCN;
 }
 
-void ModuleDinamicMemory_send( Module_Data_t *obj ,uint8_t Isr, long * const xHigherPriorityTaskWoken, char* pbuf , uint32_t var,uint32_t portMaxDelay, uint8_t CopyVarAndpbuffToStr)
+void ModuleDinamicMemory_send( Module_Data_t *obj ,uint8_t Isr, long * const xHigherPriorityTaskWoken, char* pbuf ,uint32_t portMaxDelay)
 {
 	//char* PcStringToSend = pvPortMalloc( obj->xMaxStringLength );
 	char* PcStringToSend = obj->pvPortMallocFunction( obj->xMaxStringLength );
 	/*Si quiero copiar un strig con una variable o si quiero solo copiar el buffer en crudo enviar*/
-	if(CopyVarAndpbuffToStr) snprintf( PcStringToSend ,obj->xMaxStringLength, pbuf , var); /*lleno buffer a enviar con una variable*/
-	else strcpy(PcStringToSend ,pbuf);
+	strcpy(PcStringToSend ,pbuf);
 
 	/*Si uso el enviar en una isr*/
-	if(Isr) obj->xQueueSendFromISRFunction(obj->xPointerQueue ,&PcStringToSend,&xHigherPriorityTaskWoken, 0);
+	if(Isr) obj->xQueueSendFromISRFunction(obj->xPointerQueue ,&PcStringToSend,xHigherPriorityTaskWoken, 0);
 	else  obj->xQueueSendFunction(obj->xPointerQueue ,&PcStringToSend,portMaxDelay, 0);
 	//xQueueSend( obj->xPointerQueue ,&PcStringToSend,portMAX_DELAY );
 }
