@@ -14,6 +14,8 @@
 #include "queue.h"
 #include "semphr.h"
 #include "DriverDinamicMemoryRTOS.h"
+#include <string.h>
+#include <stdlib.h>
 
 /*offset apartir del SOF*/
 #define OFFSET_OP 		 1
@@ -59,9 +61,12 @@ extern SemaphoreHandle_t SemRxUart;
 extern SemaphoreHandle_t SemMutexUart;
 extern Module_Data_t ModuleData;
 extern TaskHandle_t xTaskHandle_RxNotify ;
-extern QueueHandle_t xPointerQueue;
 
-void myTask_1( void* taskParmPtr );
+extern QueueHandle_t xPointerQueue_OP0;
+extern QueueHandle_t xPointerQueue_OP1;
+extern QueueHandle_t xPointerQueue_3;
+
+void TaskService( void* taskParmPtr );
 void TaskTxUart( void* taskParmPtr );
 void CallbackRx( void *noUsado );
 
@@ -69,5 +74,8 @@ void Task_ToMayusculas_OP0( void* taskParmPtr );
 void Task_ToMinusculas_OP1( void* taskParmPtr );
 void Task_ReportStack_OP2( void* taskParmPtr );
 void Task_ReportHeap_OP3( void* taskParmPtr );
+
+
+
 
 #endif /* EXAMPLES_C_SAPI_RTOS_FREERTOS_STATIC_MEM_FREERTOS_01_BLINKY_INC_TASK_H_ */

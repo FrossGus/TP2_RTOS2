@@ -1,5 +1,7 @@
-examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/out/examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/src/freeRTOS_blinky.o: \
- examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/src/freeRTOS_blinky.c \
+examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/out/examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/src/General.o: \
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/src/General.c \
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/General.h \
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/Task.h \
  libs/freertos/include/FreeRTOS.h \
  examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/FreeRTOSConfig.h \
  libs/lpc_open/lpc_chip_43xx/inc/chip.h \
@@ -68,8 +70,6 @@ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/out/examples/c/sapi
  libs/freertos/source/portable/ARM_CM4F/portmacro.h \
  libs/freertos/include/private/mpu_wrappers.h \
  libs/freertos/include/task.h libs/freertos/include/private/list.h \
- examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/General.h \
- examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/Task.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \
  libs/lpc_open/boards/edu_ciaa_nxp/inc/board.h \
@@ -130,5 +130,4 @@ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/out/examples/c/sapi
  libs/sapi/sapi_v0.5.2/external_peripherals/inc/sapi_ultrasonic_hcsr04.h \
  libs/freertos/include/queue.h libs/freertos/include/semphr.h \
  libs/freertos/include/queue.h \
- examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/DriverDinamicMemoryRTOS.h \
- examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/Task.h
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/DriverDinamicMemoryRTOS.h

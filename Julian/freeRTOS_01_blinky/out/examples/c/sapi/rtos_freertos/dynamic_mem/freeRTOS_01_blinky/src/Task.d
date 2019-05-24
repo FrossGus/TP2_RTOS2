@@ -129,4 +129,6 @@ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/out/examples/c/sapi
  libs/sapi/sapi_v0.5.2/external_peripherals/inc/sapi_ultrasonic_hcsr04.h \
  libs/freertos/include/queue.h libs/freertos/include/semphr.h \
  libs/freertos/include/queue.h \
- examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/DriverDinamicMemoryRTOS.h
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/DriverDinamicMemoryRTOS.h \
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/General.h \
+ examples/c/sapi/rtos_freertos/dynamic_mem/freeRTOS_01_blinky/inc/Task.h
