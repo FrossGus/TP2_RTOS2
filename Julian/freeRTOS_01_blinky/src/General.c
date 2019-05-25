@@ -54,8 +54,10 @@ void* SelecQueueFromOperation(Enum_Op_t OP){
 		XpointerSelected = xPointerQueue_OP1;
 		break;
 	case OP2:
+		XpointerSelected = xPointerQueue_OP3;
 		break;
 	case OP3:
+		XpointerSelected = xPointerQueue_OP3;
 		break;
 	}
 	return XpointerSelected;
