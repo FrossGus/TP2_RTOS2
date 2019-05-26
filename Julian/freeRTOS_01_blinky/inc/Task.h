@@ -64,11 +64,14 @@ extern TaskHandle_t xTaskHandle_RxNotify ;
 
 extern QueueHandle_t xPointerQueue_OP0;
 extern QueueHandle_t xPointerQueue_OP1;
+extern QueueHandle_t xPointerQueue_OP2;
+extern QueueHandle_t xPointerQueue_OP3;
 extern QueueHandle_t xPointerQueue_3;
 
 void TaskService( void* taskParmPtr );
 void TaskTxUart( void* taskParmPtr );
 void CallbackRx( void *noUsado );
+void Transmit_UART ( void* noUsado );
 
 void Task_ToMayusculas_OP0( void* taskParmPtr );
 void Task_ToMinusculas_OP1( void* taskParmPtr );

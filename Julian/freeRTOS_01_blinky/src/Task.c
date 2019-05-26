@@ -39,7 +39,22 @@ QueueHandle_t xPointerQueue_OP0;
 QueueHandle_t xPointerQueue_OP1;
 
 /*Puntero para crear la cola*/
+QueueHandle_t xPointerQueue_OP2;
+
+/*Puntero para crear la cola*/
+QueueHandle_t xPointerQueue_OP3;
+
+/*Puntero para crear la cola*/
 QueueHandle_t xPointerQueue_3;
+
+/**/
+TaskHandle_t xTaskHandle_MayOP0;
+
+/**/
+TaskHandle_t xTaskHandle_MinOP1;
+
+
+
 
 
 /*=================================================================================
@@ -55,7 +70,6 @@ void TaskService( void* taskParmPtr )
 	gpioWrite( LED1, ON );
 	vTaskDelay( 1000 / portTICK_RATE_MS );
 	gpioWrite( LED1, OFF );
-
 	while(TRUE) {
 		/*Notifica que llego trama Buena*/
 		xTaskNotifyWait(0,0,NULL,portMAX_DELAY);
@@ -94,7 +108,7 @@ void TaskService( void* taskParmPtr )
 		gpioToggle( LEDB );
 
 		/*sincronizar-Permite transmitir por uart lo que se recibe por la cola*/
-		xSemaphoreGive(SemTxUart);
+		//xSemaphoreGive(SemTxUart);
 	}
 }
 
@@ -108,6 +122,11 @@ void Task_ToMayusculas_OP0( void* taskParmPtr ){
 		rx = ModuleDinamicMemory_receive(&ModuleData,xPointerQueue_OP0,  portMAX_DELAY);
 		PrintUartMessageMutex("Task_ToMayusculas_OP0", SemMutexUart);
 		PrintUartBuffMutex( "mayus %s\r\n",rx,SemMutexUart);
+
+
+		//packetToUpper(rx);
+		// Enviar a cola de TaskTxUARt
+		//ModuleDinamicMemory_send(&ModuleData,0,NULL,rx, xPointerQueue_3,portMAX_DELAY);
 		/*Libera memoria dinamica*/
 		ModuleDinamicMemory_Free(&ModuleData, rx);
 	}
@@ -123,6 +142,8 @@ void Task_ToMinusculas_OP1( void* taskParmPtr ){
 		rx = ModuleDinamicMemory_receive(&ModuleData,xPointerQueue_OP1,  portMAX_DELAY);
 		PrintUartMessageMutex("Task_ToMinusculas_OP1", SemMutexUart);
 		PrintUartBuffMutex( "Minus %s\r\n",rx,SemMutexUart);
+		packetToLower(rx);
+		//ModuleDinamicMemory_send(&ModuleData,0,NULL,rx, xPointerQueue_3,portMAX_DELAY);
 		/*Libera memoria dinamica*/
 		ModuleDinamicMemory_Free(&ModuleData, rx);
 	}
@@ -132,47 +153,96 @@ void Task_ToMinusculas_OP1( void* taskParmPtr ){
  	 	 	 	 	 	 	 	 | Tarea Reportar stack disponible |
  =================================================================================*/
 void Task_ReportStack_OP2( void* taskParmPtr ){
-
-}
-
-/*=================================================================================
- 	 	 	 	 	 	 	 	 | Tarea Reportar heap disponible |
- =================================================================================*/
-void Task_ReportHeap_OP3( void* taskParmPtr ){
-
-}
-
-/*=================================================================================
- 	 	 	 	 	 	 	 	 | Tarea tx |
- =================================================================================*/
-void TaskTxUart( void* taskParmPtr ){
-	char * rx;
-// ESTA TAREA AÚN NO HACE NADA SE
-	while(true){
-		/*sincronizar-Permite transmitir por uart lo que se recibe por la cola*/
-		//	if( pdTRUE == xSemaphoreTake(SemTxUart,portMAX_DELAY) )
-		{
-			/*Recibe por la cola*/
-			rx = ModuleDinamicMemory_receive(&ModuleData, xPointerQueue_3, portMAX_DELAY);
-			PrintUartBuffMutex( "rx %s\r\n",rx,SemMutexUart);
-
-			/*Libera memoria dinamica*/
-			ModuleDinamicMemory_Free(&ModuleData, rx);
+	UBaseType_t uxHighWaterMark;
+	char *BSend;
+	char tempStack[30];
+	while(1){
+		BSend = ModuleDinamicMemory_receive(&ModuleData,xPointerQueue_OP2,  portMAX_DELAY);
+		if(Frame_parameters.Operation ==OP0){
+			//uxHighWaterMark = uxTaskGetStackHighWaterMark( &xTaskHandle_MayOP0);
 		}
+		else{
+			//uxHighWaterMark = uxTaskGetStackHighWaterMark(&xTaskHandle_MinOP1);
+		}
+		memset(tempStack, 0, sizeof(tempStack ) );
+		sprintf(tempStack, "%d", uxHighWaterMark );
+		strncpy(BSend, tempStack, strlen(tempStack));
+		// Enviar a cola de TaskTxUARt
+		ModuleDinamicMemory_send(&ModuleData,0,NULL,BSend, xPointerQueue_3,portMAX_DELAY);
+		/*Libera memoria dinamica*/
+		ModuleDinamicMemory_Free(&ModuleData, BSend);
 	}
 }
+	/*=================================================================================
+ 	 	 	 	 	 	 	 	 | Tarea Reportar heap disponible |
+ =================================================================================*/
+	void Task_ReportHeap_OP3( void* taskParmPtr ){
+		char *BSend;
+		char tempHeap[30];
+		while(1){
+			BSend = ModuleDinamicMemory_receive(&ModuleData,xPointerQueue_OP3,  portMAX_DELAY);
+			/** Decodificar OP */
+			Frame_parameters.Operation = *(BSend +  OFFSET_OP)-'0';
 
-/*=================================================================================
+			memset(tempHeap, 0, sizeof(tempHeap) );
+			//sprintf(tempHeap, "{%c%", Frame_parameters.Operation,sizeof(size_t), xPortGetFreeHeapSize() );
+			strncpy(BSend, tempHeap, strlen(tempHeap));
+			// Enviar a cola de TaskTxUARt
+			ModuleDinamicMemory_send(&ModuleData,0,NULL,BSend, xPointerQueue_3,portMAX_DELAY);
+			/*Libera memoria dinamica*/
+			ModuleDinamicMemory_Free(&ModuleData, BSend);
+		}
+	}
+
+	/*=================================================================================
+ 	 	 	 	 	 	 	 	 | Tarea tx |
+ =================================================================================*/
+	void TaskTxUart( void* taskParmPtr ){
+		char * BSend;
+		char* Txbuffer;
+		while(true){
+			/*Recibe por la cola*/
+			BSend = ModuleDinamicMemory_receive(&ModuleData, xPointerQueue_3, portMAX_DELAY);
+			sprintf(Txbuffer,"%c",Frame_parameters._SOF);
+			sprintf(Txbuffer,"%s",Frame_parameters.Operation);
+			sprintf(Txbuffer,"%s",atoi(Frame_parameters.T));
+			sprintf(Txbuffer,"%s",BSend);
+			sprintf(Txbuffer,"%c",Frame_parameters._EOF);
+			/*Libera memoria dinamica*/
+			ModuleDinamicMemory_Free(&ModuleData, BSend);
+			if( uartTxReady( UART_USB ) ){
+				// La primera vez – con esto arranca
+				Transmit_UART( 0 );
+			}
+		}
+	}
+
+	/*=================================================================================
  	 	 	 	 	 	 	 	 | Callback IT RX |
  =================================================================================*/
-void CallbackRx( void *noUsado ){
+	void CallbackRx( void *noUsado ){
 
-	UBaseType_t uxSavedInterruptStatus;
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		UBaseType_t uxSavedInterruptStatus;
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-	volatile char c = uartRxRead( UART_USB );  /*Char received*/
+		volatile char c = uartRxRead( UART_USB );  /*Char received*/
 
-	Add_IncommingFrame(uxSavedInterruptStatus ,xHigherPriorityTaskWoken,c);
+		Add_IncommingFrame(uxSavedInterruptStatus ,xHigherPriorityTaskWoken,c);
 
-	if(xHigherPriorityTaskWoken) portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-}
+		if(xHigherPriorityTaskWoken) portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
+	/*=================================================================================
+ | Callback IT TX | - 24.5.2019
+  // Falta definir readBuffer(char *buffer, char *ByteToTx);
+ =================================================================================*/
+	void Transmit_UART ( void* noUsado )
+	{
+		static int start_detected = 0;
+		char Txbyte;
+		//if( readBuffer( &Txbuffer, &Txbyte ) )
+		{
+
+			uartTxWrite( UART_USB, Txbyte );
+		}
+
+	}

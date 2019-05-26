@@ -28,20 +28,25 @@ int main(void){
 	/*Habilito todas las interrupciones de UART_USB*/
 	uartInterrupt(UART_USB, true);
 
+
+		//Requerimiento 2.5 – Transmision x buffer vacio
+	//uartTxInterruptCallbackSet( UART_USB, Transmit_UART );
+	//uartTxInterruptSet( UART_USB, true );
+
 	SemTxUart 	 =  xSemaphoreCreateBinary();
 	SemMutexUart =	xSemaphoreCreateMutex() ;
 
-	xPointerQueue_OP0	= xQueueCreate(1 , sizeof(char *)); /*Create queue OP0*/
-	xPointerQueue_OP1	= xQueueCreate(1 , sizeof(char *)); /*Create queue OP0*/
+	xPointerQueue_OP0	= xQueueCreate(2 , sizeof(char *)); /*Create queue OP0*/
+	xPointerQueue_OP1	= xQueueCreate(2 , sizeof(char *)); /*Create queue OP0*/
 	xPointerQueue_3		= xQueueCreate(1 , sizeof(char *)); /*Create queue OP0*/
 
 
 	xTaskCreate(TaskTxUart, (const char *)"TaskTxUart",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
-	xTaskCreate(TaskService, (const char *)"TaskService",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, &xTaskHandle_RxNotify);
+	xTaskCreate(TaskService, (const char *)"TaskService",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 2, &xTaskHandle_RxNotify);
 	xTaskCreate(Task_ToMayusculas_OP0, (const char *)"Task_ToMayusculas_OP0",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
 	xTaskCreate(Task_ToMinusculas_OP1, (const char *)"Task_ToMinusculas_OP1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
-//	xTaskCreate(Task_ReportStack_OP2, (const char *)"Task_ToMayusculas_OP0",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
-//	xTaskCreate(Task_ReportHeap_OP3, (const char *)"Task_ToMinusculas_OP1",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
+	//xTaskCreate(Task_ReportStack_OP2, (const char *)"Task_ToMayusculas_OP2",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
+	//xTaskCreate(Task_ReportHeap_OP3, (const char *)"Task_ToMinusculas_OP3",configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL);
 
 	/*Inicializar Driver memoria dinamica*/
 	ModuleDinamicMemory_initialize(&ModuleData,50,xQueueGenericSend,xQueueGenericSendFromISR, xQueueReceive,xQueueGenericCreate, pvPortMalloc, vPortFree);
